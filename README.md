@@ -1,4 +1,4 @@
-##Mini-rasp-os
+## Mini-rasp-os
 An simple&mini operating system for Raspberry Pi
 
 ## source: 
