@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-
+#include "mm.h"
 #include "register.h"
 
 #define UART0_TEXT_FLAG ((uint16_t)0x10)
@@ -46,7 +46,10 @@ unsigned char get_c() {
 }
 
 int kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
+    (void) atags;
     uart_init();
+    put_str("Initialize Memory\n");
+    mm_init((atag_t *)atags);    
     put_str("Welcome to Raspi mini os !!! \r\n");
     while (1);
     return 0;
