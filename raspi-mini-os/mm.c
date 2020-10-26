@@ -49,6 +49,14 @@ Page *pop_page(Header *free_pages) {
     return page;
 }
 
+void mvptr_bef_freeptr(Heap *ptr) {
+    if (ptr->prev) ptr->prev->next = ptr->next; // maybe have more elegant way to avoid null pointer reference
+    if (ptr->next) ptr->next->prev = ptr->prev;
+    if (free_ptr->prev) free_ptr->prev->next = ptr;
+    ptr->prev = free_ptr->prev;
+    ptr->next = free_ptr;
+}
+
 void mm_init(atag_t *atags) {
     uint32_t mem_size, page_list_len, page_list_end, num_kernel_pages, i;
 
@@ -124,11 +132,7 @@ void *my_malloc(uint32_t nbytes) {
                 min_diff = tmp_diff;
                 best_fit = ptr;
                 if (tmp_diff == 0) {
-                    if (ptr->prev) ptr->prev->next = ptr->next; // maybe have more elegant way to avoid null pointer reference
-                    if (ptr->next) ptr->next->prev = ptr->prev;
-                    if (free_ptr->prev) free_ptr->prev->next = ptr;
-                    ptr->prev = free_ptr->prev;
-                    ptr->next = free_ptr;
+                    mvptr_bef_freeptr(ptr);
                     return best_fit++;
                 }
             }
@@ -159,9 +163,6 @@ void my_free(void *ptr) {
     Heap *seg;
     if (!ptr) return;
     seg = ptr - sizeof(Heap);
-    if (seg->prev) seg->prev->next = seg->next; // maybe have more elegant way to avoid null pointer reference
-    if (seg->next) seg->next->prev = seg->prev;
-    if (free_ptr->prev) free_ptr->prev->next = seg;
-    seg->prev = free_ptr->prev;
-    seg->next = free_ptr;
+    mvptr_bef_freeptr(seg);
+    free_ptr = seg;
 }

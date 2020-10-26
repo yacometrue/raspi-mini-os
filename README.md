@@ -1,4 +1,6 @@
-# A fun practice for writing OS on mini Raspberry pi2
+##Mini-rasp-os
+An simple&mini operating system for Raspberry Pi
 
-## source: https://wiki.osdev.org/Raspberry_Pi_Bare_Bones
-## source: https://jsandler18.github.io/
+## source: 
+**** [some useful info](https://wiki.osdev.org/Raspberry_Pi_Bare_Bones)
+* [nice tutorial](https://jsandler18.github.io/)
