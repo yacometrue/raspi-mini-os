@@ -1,4 +1,5 @@
 gcc*
 *.o
 *.elf
+*.img
 
