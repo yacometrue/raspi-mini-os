@@ -22,8 +22,7 @@ void heap_init(void *start) {
     my_memset(start, 0, sizeof(Heap));
     head = *(Heap *)start;
     head.seg_size = HEAP_SIZE;
-    head.prev = NULL;
-    head.next = NULL;
+    head.prev = head.next = NULL;
     free_ptr = &head;
 }
 
@@ -123,7 +122,6 @@ void *my_malloc(uint32_t nbytes) {
     /*4 bytes alignment*/
     nbytes += (nbytes & 0x3) ? (0x4 - (nbytes & 0x3)) : 0;
 
-    if (free_ptr == NULL) return NULL;
     /* traverse all seg find minimum difference */
     for (ptr = free_ptr; ptr ;ptr = ptr->next) {
         if (ptr->seg_size >= nbytes) {
@@ -139,6 +137,9 @@ void *my_malloc(uint32_t nbytes) {
         }
     }
 
+    if (ptr == NULL)
+        return NULL;
+
     if (min_diff > (int)(2 * sizeof(Heap))) {
         my_memset((void *)(best_fit + nbytes), 0, sizeof(Heap));
         ptr = ptr->next;
@@ -150,12 +151,7 @@ void *my_malloc(uint32_t nbytes) {
     }
 
     ptr = best_fit;
-    if (ptr->prev) ptr->prev->next = ptr->next; // maybe have more elegant way to avoid null pointer reference
-    if (ptr->next) ptr->next->prev = ptr->prev;
-    if (free_ptr->prev) free_ptr->prev->next = ptr;
-    ptr->prev = free_ptr->prev;
-    ptr->next = free_ptr;
-   
+    mvptr_bef_freeptr(ptr);
     return best_fit++;
 }
 
@@ -165,4 +161,5 @@ void my_free(void *ptr) {
     seg = ptr - sizeof(Heap);
     mvptr_bef_freeptr(seg);
     free_ptr = seg;
+    /* merged or not? */
 }
