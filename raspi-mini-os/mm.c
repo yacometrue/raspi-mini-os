@@ -49,7 +49,7 @@ Page *pop_page(Header *free_pages) {
     return page;
 }
 
-void mem_init(atag_t *atags) {
+void mm_init(atag_t *atags) {
     uint32_t mem_size, page_list_len, page_list_end, num_kernel_pages, i;
 
     mem_size = get_mem_size(atags);

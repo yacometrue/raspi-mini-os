@@ -3,7 +3,7 @@ CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding
 CSRCFLAGS = -O2 -Wall -Wextra
 LFLAGS = -ffreestanding -O2 -nostdlib
 DIR = .
-OBJ:= os.o boot.o
+OBJ:= os.o boot.o mm.o atag.o
 
 IMG_NAME = raspOS.img
 
