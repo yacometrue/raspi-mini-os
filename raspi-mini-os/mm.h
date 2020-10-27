@@ -30,6 +30,7 @@ typedef struct heap_seg {
     struct heap_seg *prev;
     struct heap_seg *next;
     uint32_t seg_size;
+    uint32_t allocated;
 } Heap;
 
 void mm_init(atag_t *atags);

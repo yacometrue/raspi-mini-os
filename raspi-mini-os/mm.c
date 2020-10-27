@@ -11,7 +11,7 @@ static Header free_pages;
 
 /* def for heap */
 static Heap head;
-static Heap *free_ptr;
+//static Heap *free_ptr;
 
 void my_memset(void *dest, int val, size_t len) {
     unsigned char *ptr = dest;
@@ -22,8 +22,9 @@ void heap_init(void *start) {
     my_memset(start, 0, sizeof(Heap));
     head = *(Heap *)start;
     head.seg_size = HEAP_SIZE;
+    head.allocated = 0;
     head.prev = head.next = NULL;
-    free_ptr = &head;
+ //   free_ptr = &head;
 }
 
 void append_page(Header *free_pages, Page *page) {
@@ -46,14 +47,6 @@ Page *pop_page(Header *free_pages) {
     free_pages->head->prev = NULL;
     (free_pages->size)--;
     return page;
-}
-
-void mvptr_bef_freeptr(Heap *ptr) {
-    if (ptr->prev) ptr->prev->next = ptr->next; // maybe have more elegant way to avoid null pointer reference
-    if (ptr->next) ptr->next->prev = ptr->prev;
-    if (free_ptr->prev) free_ptr->prev->next = ptr;
-    ptr->prev = free_ptr->prev;
-    ptr->next = free_ptr;
 }
 
 void mm_init(atag_t *atags) {
@@ -115,51 +108,60 @@ void free_page(void *ptr) {
 }
 /*best fit policy*/
 void *my_malloc(uint32_t nbytes) {
-    Heap *ptr, *best_fit;
+    Heap *ptr, *best_fit = NULL;
     int32_t tmp_diff, min_diff = 0x7FFFFFFF;
     
     nbytes += sizeof(Heap);
-    /*4 bytes alignment*/
+    /*Padding*/
     nbytes += (nbytes & 0x3) ? (0x4 - (nbytes & 0x3)) : 0;
 
     /* traverse all seg find minimum difference */
-    for (ptr = free_ptr; ptr ;ptr = ptr->next) {
-        if (ptr->seg_size >= nbytes) {
+    for (ptr = &head; ptr ;ptr = ptr->next) {
+        if (!ptr->allocated && ptr->seg_size >= nbytes) {
             tmp_diff = ptr->seg_size - nbytes;
             if (min_diff > tmp_diff) {
                 min_diff = tmp_diff;
                 best_fit = ptr;
                 if (tmp_diff == 0) {
-                    mvptr_bef_freeptr(ptr);
-                    return best_fit++;
+                    best_fit->allocated = 1;
+                    return best_fit++; /* skip header */
                 }
             }
         }
     }
 
-    if (ptr == NULL)
-        return NULL;
+    if (best_fit == NULL) return NULL;
 
     if (min_diff > (int)(2 * sizeof(Heap))) {
-        my_memset((void *)(best_fit + nbytes), 0, sizeof(Heap));
-        ptr = ptr->next;
-        best_fit->next = best_fit + nbytes;
+        my_memset((void *)(best_fit) + nbytes, 0, sizeof(Heap));
+        ptr = best_fit->next;
+        best_fit->next = ((void *)best_fit) + nbytes; // TODO: Be careful about type casting
         best_fit->next->prev = best_fit;
         best_fit->next->next = ptr;
         best_fit->next->seg_size = best_fit->seg_size - nbytes;
         best_fit->seg_size = nbytes;
     }
 
-    ptr = best_fit;
-    mvptr_bef_freeptr(ptr);
-    return best_fit++;
+    best_fit->allocated = 1;
+
+    return best_fit++; /* skip header */
 }
 
 void my_free(void *ptr) {
+    if (!ptr) 
+        return;
     Heap *seg;
-    if (!ptr) return;
     seg = ptr - sizeof(Heap);
-    mvptr_bef_freeptr(seg);
-    free_ptr = seg;
-    /* merged or not? */
+    seg->allocated = 0;
+    /* merge prev&next segment if not allocated*/
+    if (seg->next && !seg->next->allocated) {
+        seg->seg_size += sizeof(Heap) + seg->next->seg_size; 
+        seg->next = seg->next->next;
+        if (seg->next->next) seg->next->next->prev = seg;
+    }
+    if (seg->prev && !seg->prev->allocated) {
+        seg = seg->prev;
+        seg->seg_size += sizeof(Heap) + seg->next->seg_size; 
+        if (seg->next->next) seg->next->next->prev = seg;
+    }
 }
