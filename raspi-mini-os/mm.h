@@ -4,7 +4,6 @@
 #define MM_H
 
 #define PAGE_SIZE 4096
-#define HEAP_SIZE 2048 * 1023 //reserved 2MB
 
 typedef struct {
     uint8_t allocated : 1;
@@ -26,12 +25,6 @@ typedef struct {
     uint32_t size;
 } Header;
 
-typedef struct heap_seg {
-    struct heap_seg *prev;
-    struct heap_seg *next;
-    uint32_t seg_size;
-    uint32_t allocated;
-} Heap;
 
 void mm_init(atag_t *atags);
 void *alloc_page(void);
