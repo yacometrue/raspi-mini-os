@@ -4,22 +4,21 @@
 #ifndef MALLOC_H
 #define MALLOC_H
 
-#define INIT_HEAP_SIZE 512 * 1024 //reserved 0.5 MB
-#define MAX_HEAP_SIZE 2048 * 1024 //max 2 MB
-#define SEG_LISTS_NUM 10
+#define INIT_HEAP_SIZE 512 * 1024  //reserved 0.5 MB
+#define MAX_HEAP_SIZE  2048 * 1024 //max 2 MB
+#define SEG_LISTS_NUM  10
 #define MAX_BLOCK_SIZE 8192
-#define MEM_PER_SEG   32768
+#define MEM_PER_SEG    (32768 + sizeof(heap_header)) 	  //2^15 
 
 typedef struct heap {
     struct heap *next;
-    uint32_t allocated;
-} heap;  
+} Heap;  
 
 typedef struct {
-    heap *head;
+    Heap *head;
+    Heap *tail;
     uint32_t block_size;
 } heap_header;
-
 
 void my_memset(void *dest, int val, size_t len);
 void heap_init(void *start);

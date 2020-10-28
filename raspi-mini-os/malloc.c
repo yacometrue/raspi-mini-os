@@ -1,5 +1,4 @@
 #include "malloc.h"
-
 #include <stddef.h>
 #include <stdint.h>
 
@@ -22,46 +21,57 @@ void heap_init(void *start) {
         seg_list[i] = header;
         my_memset((void *)header, 0, sizeof(heap_header));
         block_num = MEM_PER_SEG / block_size;
-        heap *hp = (heap *)(((void *)header) + sizeof(heap_header));
+        Heap *hp = (Heap *)(((void *)header) + sizeof(heap_header));
         header->block_size = block_size;
         header->head = hp;
 
         while (block_num--) {
-            hp->next = (heap *)(((void *)hp) + block_size);
-            my_memset((void *)hp->next, 0, sizeof(heap));
+            hp->next = (Heap *)(((void *)hp) + block_size);
+            my_memset((void *)hp->next, 0, sizeof(Heap));
             hp = hp->next;
             hp->next = NULL;
         }
-
-        header += MEM_PER_SEG / sizeof(heap_header);
+        header->tail = hp;
+        header += MEM_PER_SEG / sizeof(heap_header) + 1; //+1 for heap_header of next heap segment
         block_size /= 2;
     }
 }
 
+/*  Implement LIFO (Last In First Out) policy, 
+    only keep free heap segments in list to save space&time,
+    malloc take firt segment from head, free append free segment to tail.
+*/
 void *malloc(uint32_t nbytes) {
     int8_t i = 0;
-    heap* hp;
-    nbytes += sizeof(heap);
+    Heap* hp;
+    nbytes += sizeof(Heap);
     /*First fit*/
     while (i < SEG_LISTS_NUM) {
-        if (seg_list[i]->block_size >= nbytes) {
+        if (seg_list[i]->block_size >= nbytes && seg_list[i]->head) {
             hp = seg_list[i]->head;
-            while (hp) {
-                if (!hp->allocated){
-                    hp->allocated = 1;
-                    return hp++; /* skip next pointer & allocated mem space*/
-                }
-                hp = hp->next;
-            }
+		    seg_list[i]->head = hp->next;
+		    return hp++;
         }
-        ++i;
-    }
+	++i;
+	}
     return NULL;
 }
 
 void free(void *ptr) {
-    if (!ptr) return; /* avoid NULL pointer*/
-    heap *hp;
-    hp = (heap *)(ptr - sizeof(heap));
-    hp->allocated = 0;
+    if (!ptr)
+	    return;
+
+    int32_t index;
+    Heap *hp;
+	hp = (Heap *)(ptr - sizeof(Heap));
+    hp->next = NULL;
+    index = (*(int32_t*)ptr - *(int32_t*) seg_list[0]->head) / (int32_t) MEM_PER_SEG;
+
+    if (!seg_list[index]->head) {   //if no head then no tail
+        seg_list[index]->head = hp;
+        seg_list[index]->tail = hp;
+        return;
+    }
+    seg_list[index]->tail->next = hp;
+    seg_list[index]->tail = hp;
 }
