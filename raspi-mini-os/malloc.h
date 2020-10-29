@@ -4,11 +4,12 @@
 #ifndef MALLOC_H
 #define MALLOC_H
 
-#define INIT_HEAP_SIZE 512 * 1024 //reserved 0.5 MB
-#define MAX_HEAP_SIZE 2048 * 1024 //max 2 MB
-#define SEG_LISTS_NUM 10
-#define MAX_BLOCK_SIZE 8192
-#define MEM_PER_SEG (32768 + sizeof(heap_header)) //2^15
+#define __REG_TYPE      volatile uint32_t
+#define INIT_HEAP_SIZE  ((__REG_TYPE) 512 * 1024) //reserved 0.5 MB = 2 ^ 19
+#define MAX_HEAP_SIZE   ((__REG_TYPE) 2048 * 1024) //max 2 MB = 2 ^ 21
+#define SEG_LISTS_NUM   ((__REG_TYPE) 10)
+#define MAX_BLOCK_SIZE  ((__REG_TYPE) 8192)
+#define MEM_PER_SEG     ((__REG_TYPE) (32768 + sizeof(heap_header)) //2^15 + header
 
 typedef struct heap {
     struct heap* next;

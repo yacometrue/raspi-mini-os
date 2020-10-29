@@ -1,3 +1,5 @@
+// TODO : add sbrk function to manage heap
+// TODO : add merge and split while keep memory alignment
 #include "malloc.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -13,14 +15,14 @@ void my_memset(void* dest, int val, size_t len)
 
 void heap_init(void* start)
 {
-    uint32_t block_size = MAX_BLOCK_SIZE;
+    uint32_t block_size = 16;
     uint32_t block_num;
-    int8_t i = SEG_LISTS_NUM;
+    int8_t i = 0;
 
     heap_header* header;
     header = (heap_header*)start;
 
-    while (--i >= 0) {
+    while (i < SEG_LISTS_NUM) {
         seg_list[i] = header;
         my_memset((void*)header, 0, sizeof(heap_header));
         block_num = MEM_PER_SEG / block_size;
@@ -35,8 +37,8 @@ void heap_init(void* start)
             hp->next = NULL;
         }
         header->tail = hp;
-        header += MEM_PER_SEG / sizeof(heap_header) + 1; //+1 for heap_header of next heap segment
-        block_size /= 2;
+        header += MEM_PER_SEG / sizeof(heap_header); 
+        block_size *= 2;
     }
 }
 
